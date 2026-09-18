@@ -10,4 +10,5 @@ public class HealthController {
     public String health() {
         return "OpenChain Sentinel Backend is running!";
     }
+    
 }
