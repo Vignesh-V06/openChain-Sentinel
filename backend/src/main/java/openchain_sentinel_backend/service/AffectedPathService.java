@@ -2,13 +2,12 @@ package openchain_sentinel_backend.service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.neo4j.driver.Driver;
+import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
 import org.neo4j.driver.SessionConfig;
 import org.neo4j.driver.Values;
-import org.neo4j.driver.Record;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +17,7 @@ import openchain_sentinel_backend.model.AffectedPathMetrics;
 public class AffectedPathService {
 
     private final Driver driver;
+
     private final String database;
 
     public AffectedPathService(
@@ -43,26 +43,35 @@ public class AffectedPathService {
 
                 /*
                  * --------------------------------------------------
-                 * 1. Find every dependency path from the project
-                 *    to the vulnerable version.
+                 * 1. Find dependency paths belonging ONLY to the
+                 *    current scan.
                  * --------------------------------------------------
-                 *
-                 * We use Version because that is the actual
-                 * label in our Neo4j graph.
                  */
+
                 List<Record> pathRecords = tx.run(
                         """
                         MATCH path =
                             (p:Project {projectId: $projectId})
-                            -[:DEPENDS_ON*1..8]->
+                            -[deps:DEPENDS_ON*1..8]->
                             (version:Version)
-                            -[:AFFECTED_BY {scanId: $scanId}]->
+                            -[:AFFECTED_BY {
+                                scanId: $scanId
+                            }]->
                             (v:Vulnerability {
                                 vulnId: $vulnerabilityId
                             })
+
+                        WHERE all(
+                            relationship IN deps
+                            WHERE relationship.scanId = $scanId
+                        )
+
                         RETURN
                             length(path) - 1 AS dependencyDepth,
-                            version.coordinate AS affectedPackage,
+
+                            version.coordinate
+                                AS affectedPackage,
+
                             [n IN nodes(path) |
                                 coalesce(
                                     n.coordinate,
@@ -71,8 +80,10 @@ public class AffectedPathService {
                                     n.vulnId
                                 )
                             ] AS dependencyPath
+
                         ORDER BY dependencyDepth ASC
                         """,
+
                         Values.parameters(
                                 "projectId",
                                 projectId,
@@ -83,6 +94,7 @@ public class AffectedPathService {
                                 "vulnerabilityId",
                                 vulnerabilityId
                         )
+
                 ).list();
 
                 /*
@@ -99,8 +111,9 @@ public class AffectedPathService {
                 for (Record record : pathRecords) {
 
                     int depth =
-                            record.get("dependencyDepth")
-                                    .asInt();
+                            record.get(
+                                    "dependencyDepth"
+                            ).asInt();
 
                     if (minimumDepth == 0
                             || depth < minimumDepth) {
@@ -109,11 +122,12 @@ public class AffectedPathService {
                     }
 
                     List<String> path =
-                            record.get("dependencyPath")
-                                    .asList(
-                                            value ->
-                                                    value.asString()
-                                    );
+                            record.get(
+                                    "dependencyPath"
+                            ).asList(
+                                    value ->
+                                            value.asString()
+                            );
 
                     dependencyPaths.add(path);
                 }
@@ -130,6 +144,10 @@ public class AffectedPathService {
                 /*
                  * --------------------------------------------------
                  * 4. Count distinct affected components
+                 *
+                 * IMPORTANT:
+                 * DEPENDS_ON relationships are filtered by
+                 * the current scan here as well.
                  * --------------------------------------------------
                  */
 
@@ -140,7 +158,7 @@ public class AffectedPathService {
                                     (p:Project {
                                         projectId: $projectId
                                     })
-                                    -[:DEPENDS_ON*1..8]->
+                                    -[deps:DEPENDS_ON*1..8]->
                                     (version:Version)
                                     -[:AFFECTED_BY {
                                         scanId: $scanId
@@ -148,10 +166,17 @@ public class AffectedPathService {
                                     (v:Vulnerability {
                                         vulnId: $vulnerabilityId
                                     })
+
+                                WHERE all(
+                                    relationship IN deps
+                                    WHERE relationship.scanId = $scanId
+                                )
+
                                 RETURN count(
                                     DISTINCT version
                                 ) AS affectedComponentCount
                                 """,
+
                                 Values.parameters(
                                         "projectId",
                                         projectId,
@@ -162,14 +187,17 @@ public class AffectedPathService {
                                         "vulnerabilityId",
                                         vulnerabilityId
                                 )
+
                         )
                         .single()
-                        .get("affectedComponentCount")
+                        .get(
+                                "affectedComponentCount"
+                        )
                         .asInt();
 
                 /*
                  * --------------------------------------------------
-                 * 5. Return all metrics required by Risk Engine
+                 * 5. Return metrics to Risk Engine
                  * --------------------------------------------------
                  */
 

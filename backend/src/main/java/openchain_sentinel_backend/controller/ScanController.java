@@ -1,10 +1,12 @@
 package openchain_sentinel_backend.controller;
 
-import openchain_sentinel_backend.model.Scan;
-import openchain_sentinel_backend.service.ScanService;
+import java.util.List;
+
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import openchain_sentinel_backend.model.Scan;
+import openchain_sentinel_backend.service.ScanOrchestrationService;
+import openchain_sentinel_backend.service.ScanService;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/scans")
@@ -12,34 +14,90 @@ public class ScanController {
 
     private final ScanService scanService;
 
-    public ScanController(ScanService scanService) {
+    private final ScanOrchestrationService
+            scanOrchestrationService;
+
+    public ScanController(
+            ScanService scanService,
+            ScanOrchestrationService
+                    scanOrchestrationService) {
+
         this.scanService = scanService;
+
+        this.scanOrchestrationService =
+                scanOrchestrationService;
     }
 
-    // CREATE SCAN
+    /*
+     * --------------------------------------------------
+     * Create and execute a scan
+     * --------------------------------------------------
+     */
+
     @PostMapping
-    public Scan createScan(@PathVariable String projectId) {
-        return scanService.createScan(projectId);
+    public Scan createScan(
+            @PathVariable String projectId) {
+
+        Scan scan =
+                scanService.createScan(
+                        projectId
+                );
+
+        return scanOrchestrationService.executeScan(
+                projectId,
+                scan.getId()
+        );
     }
 
-    // GET ALL SCANS FOR PROJECT
+    /*
+     * --------------------------------------------------
+     * Get all scans for a project
+     * --------------------------------------------------
+     */
+
     @GetMapping
-    public List<Scan> getScansByProjectId(@PathVariable String projectId) {
-        return scanService.getScansByProjectId(projectId);
+    public List<Scan> getScans(
+            @PathVariable String projectId) {
+
+        return scanService.getScansByProjectId(
+                projectId
+        );
     }
 
-    // GET ONE SCAN
+    /*
+     * --------------------------------------------------
+     * Get one scan
+     * --------------------------------------------------
+     */
+
     @GetMapping("/{scanId}")
-    public Scan getScanById(@PathVariable String scanId) {
-        return scanService.getScanById(scanId);
+    public Scan getScan(
+            @PathVariable String projectId,
+            @PathVariable String scanId) {
+
+        return scanService.getScanById(
+                scanId
+        );
     }
 
-    // UPDATE SCAN STATUS
+    /*
+     * --------------------------------------------------
+     * Manually update status
+     * --------------------------------------------------
+     *
+     * Kept because it is already part of our
+     * development/testing API.
+     */
+
     @PutMapping("/{scanId}/status")
     public Scan updateScanStatus(
+            @PathVariable String projectId,
             @PathVariable String scanId,
             @RequestParam String status) {
 
-        return scanService.updateScanStatus(scanId, status);
+        return scanService.updateScanStatus(
+                scanId,
+                status
+        );
     }
 }

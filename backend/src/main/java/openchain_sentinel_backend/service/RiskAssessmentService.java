@@ -7,23 +7,41 @@ import org.springframework.stereotype.Service;
 
 import openchain_sentinel_backend.model.AffectedPathMetrics;
 import openchain_sentinel_backend.model.RiskAssessment;
+import openchain_sentinel_backend.model.RiskAssessmentDocument;
 import openchain_sentinel_backend.model.VulnerabilityResult;
+import openchain_sentinel_backend.repository.RiskAssessmentRepository;
 import openchain_sentinel_backend.repository.VulnerabilityResultRepository;
 
 @Service
 public class RiskAssessmentService {
 
-    private final VulnerabilityResultRepository vulnerabilityResultRepository;
-    private final AffectedPathService affectedPathService;
-    private final RiskEngineService riskEngineService;
+    private final VulnerabilityResultRepository
+            vulnerabilityResultRepository;
+
+    private final RiskAssessmentRepository
+            riskAssessmentRepository;
+
+    private final AffectedPathService
+            affectedPathService;
+
+    private final RiskEngineService
+            riskEngineService;
 
     public RiskAssessmentService(
-            VulnerabilityResultRepository vulnerabilityResultRepository,
-            AffectedPathService affectedPathService,
-            RiskEngineService riskEngineService) {
+            VulnerabilityResultRepository
+                    vulnerabilityResultRepository,
+            RiskAssessmentRepository
+                    riskAssessmentRepository,
+            AffectedPathService
+                    affectedPathService,
+            RiskEngineService
+                    riskEngineService) {
 
         this.vulnerabilityResultRepository =
                 vulnerabilityResultRepository;
+
+        this.riskAssessmentRepository =
+                riskAssessmentRepository;
 
         this.affectedPathService =
                 affectedPathService;
@@ -32,15 +50,26 @@ public class RiskAssessmentService {
                 riskEngineService;
     }
 
-    public List<RiskAssessment> assessScan(String scanId) {
+    public List<RiskAssessment> assessScan(
+            String scanId) {
 
         List<VulnerabilityResult> vulnerabilities =
-                vulnerabilityResultRepository.findByScanId(scanId);
+                vulnerabilityResultRepository
+                        .findByScanId(scanId);
 
         List<RiskAssessment> assessments =
                 new ArrayList<>();
 
-        for (VulnerabilityResult vulnerability : vulnerabilities) {
+        /*
+         * Remove old risk assessments for this scan.
+         * This keeps rescans idempotent.
+         */
+        riskAssessmentRepository.deleteByScanId(
+                scanId
+        );
+
+        for (VulnerabilityResult vulnerability :
+                vulnerabilities) {
 
             String projectId =
                     vulnerability.getProjectId();
@@ -49,20 +78,18 @@ public class RiskAssessmentService {
                     vulnerability.getVulnerabilityId();
 
             /*
-             * Get dependency impact information
-             * from Neo4j.
+             * Get dependency impact from Neo4j.
              */
             AffectedPathMetrics metrics =
-                    affectedPathService.analyzeVulnerability(
-                            projectId,
-                            scanId,
-                            vulnerabilityId
-                    );
+                    affectedPathService
+                            .analyzeVulnerability(
+                                    projectId,
+                                    scanId,
+                                    vulnerabilityId
+                            );
 
             /*
-             * Pass the vulnerability itself together
-             * with the Neo4j dependency impact metrics
-             * to the Risk Engine.
+             * Calculate risk.
              */
             RiskAssessment assessment =
                     riskEngineService.assess(
@@ -72,27 +99,69 @@ public class RiskAssessmentService {
                     );
 
             /*
-             * Use the actual Neo4j dependency depth.
+             * Use actual Neo4j depth.
              */
             assessment.setDependencyDepth(
                     metrics.getDependencyDepth()
             );
 
-            /*
-             * Keep the affected-path count from Neo4j.
-             */
             assessment.setAffectedPathCount(
                     metrics.getAffectedPathCount()
             );
 
-            /*
-             * Keep the affected-component count from Neo4j.
-             */
             assessment.setAffectedComponentCount(
                     metrics.getAffectedComponentCount()
             );
 
             assessments.add(assessment);
+
+            /*
+             * Persist risk assessment.
+             */
+            RiskAssessmentDocument document =
+                    new RiskAssessmentDocument();
+
+            document.setScanId(scanId);
+
+            document.setProjectId(projectId);
+
+            document.setVulnerabilityId(
+                    assessment.getVulnerabilityId()
+            );
+
+            document.setRiskScore(
+                    assessment.getRiskScore()
+            );
+
+            document.setRiskLevel(
+                    assessment.getRiskLevel()
+            );
+
+            document.setPriority(
+                    assessment.getPriority()
+            );
+
+            document.setDependencyDepth(
+                    assessment.getDependencyDepth()
+            );
+
+            document.setAffectedPathCount(
+                    assessment.getAffectedPathCount()
+            );
+
+            document.setAffectedComponentCount(
+                    assessment.getAffectedComponentCount()
+            );
+
+            document.setReasons(
+                    new ArrayList<>(
+                            assessment.getReasons()
+                    )
+            );
+
+            riskAssessmentRepository.save(
+                    document
+            );
         }
 
         return assessments;
@@ -123,11 +192,12 @@ public class RiskAssessmentService {
                 vulnerabilities.get(0);
 
         AffectedPathMetrics metrics =
-                affectedPathService.analyzeVulnerability(
-                        vulnerability.getProjectId(),
-                        scanId,
-                        vulnerabilityId
-                );
+                affectedPathService
+                        .analyzeVulnerability(
+                                vulnerability.getProjectId(),
+                                scanId,
+                                vulnerabilityId
+                        );
 
         RiskAssessment assessment =
                 riskEngineService.assess(
@@ -149,5 +219,13 @@ public class RiskAssessmentService {
         );
 
         return assessment;
+    }
+
+    public List<RiskAssessmentDocument> getPersistedAssessments(
+            String scanId) {
+
+        return riskAssessmentRepository.findByScanId(
+                scanId
+        );
     }
 }
