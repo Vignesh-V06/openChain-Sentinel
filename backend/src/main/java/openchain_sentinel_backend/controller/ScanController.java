@@ -2,9 +2,15 @@ package openchain_sentinel_backend.controller;
 
 import java.util.List;
 
+import org.bson.Document;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.web.bind.annotation.*;
 
 import openchain_sentinel_backend.model.Scan;
+import openchain_sentinel_backend.model.VulnerabilityResult;
+import openchain_sentinel_backend.repository.VulnerabilityResultRepository;
 import openchain_sentinel_backend.service.ScanOrchestrationService;
 import openchain_sentinel_backend.service.ScanService;
 
@@ -17,15 +23,26 @@ public class ScanController {
     private final ScanOrchestrationService
             scanOrchestrationService;
 
+    private final VulnerabilityResultRepository
+            vulnerabilityResultRepository;
+
+    private final MongoTemplate mongoTemplate;
+
     public ScanController(
             ScanService scanService,
-            ScanOrchestrationService
-                    scanOrchestrationService) {
+            ScanOrchestrationService scanOrchestrationService,
+            VulnerabilityResultRepository vulnerabilityResultRepository,
+            MongoTemplate mongoTemplate) {
 
         this.scanService = scanService;
 
         this.scanOrchestrationService =
                 scanOrchestrationService;
+
+        this.vulnerabilityResultRepository =
+                vulnerabilityResultRepository;
+
+        this.mongoTemplate = mongoTemplate;
     }
 
     /*
@@ -77,6 +94,69 @@ public class ScanController {
 
         return scanService.getScanById(
                 scanId
+        );
+    }
+
+    /*
+     * --------------------------------------------------
+     * Get vulnerabilities for a scan
+     * --------------------------------------------------
+     */
+
+    @GetMapping("/{scanId}/vulnerabilities")
+    public List<VulnerabilityResult> getScanVulnerabilities(
+            @PathVariable String projectId,
+            @PathVariable String scanId) {
+
+        return vulnerabilityResultRepository
+                .findByScanId(scanId);
+    }
+
+    /*
+     * --------------------------------------------------
+     * Get risk assessments for a scan
+     * --------------------------------------------------
+     */
+
+    @GetMapping("/{scanId}/risk")
+    public List<Document> getScanRiskAssessments(
+            @PathVariable String projectId,
+            @PathVariable String scanId) {
+
+        Query query =
+                Query.query(
+                        Criteria.where("scanId")
+                                .is(scanId)
+                );
+
+        return mongoTemplate.find(
+                query,
+                Document.class,
+                "risk_assessments"
+        );
+    }
+
+    /*
+     * --------------------------------------------------
+     * Get scan-level risk summary
+     * --------------------------------------------------
+     */
+
+    @GetMapping("/{scanId}/summary")
+    public Document getScanRiskSummary(
+            @PathVariable String projectId,
+            @PathVariable String scanId) {
+
+        Query query =
+                Query.query(
+                        Criteria.where("scanId")
+                                .is(scanId)
+                );
+
+        return mongoTemplate.findOne(
+                query,
+                Document.class,
+                "scan_risk_summaries"
         );
     }
 
