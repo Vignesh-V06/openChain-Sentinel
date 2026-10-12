@@ -1,257 +1,154 @@
+
 import {
   BrowserRouter,
   Navigate,
+  Outlet,
   Route,
   Routes,
 } from "react-router-dom";
 
-import Sidebar from "./components/layout/Sidebar";
-import Topbar from "./components/layout/Topbar";
+import AppShell from "./components/layout/AppShell";
 
 import DashboardEntry from "./pages/DashboardEntry";
-import Dashboard from "./pages/Dashboard";
 import Projects from "./pages/Projects";
 import ProjectDetails from "./pages/ProjectDetails";
-import ScanView from "./pages/ScanView";
 import ScanHistory from "./pages/ScanHistory";
+import ScanView from "./pages/ScanView";
+import VulnerabilityIntelligence from "./pages/VulnerabilityIntelligence";
+import DependencyGraph from "./pages/DependencyGraph";
+import RiskAnalysis from "./pages/RiskAnalysis";
+import Settings from "./pages/Settings";
+import AuthPage from "./pages/AuthPage";
 
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
-function AppLayout({ children }) {
-
+function AuthLoadingScreen() {
   return (
-    <div className="app">
-
-      <Sidebar />
-
-      <div className="app-content">
-
-        <Topbar />
-
-        {children}
-
-      </div>
-
+    <div className="auth-loading">
+      <span className="auth-spinner">◌</span>
+      <span>Checking your session...</span>
     </div>
   );
 }
 
+function RootRedirect() {
+  const { isAuthenticated, loading } = useAuth();
 
-function PlaceholderPage({
-  title,
-  description,
-}) {
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
 
   return (
-    <main className="dashboard-page">
-
-      <section className="page-heading">
-
-        <div>
-
-          <div className="eyebrow">
-            OPENCHAIN SENTINEL
-          </div>
-
-          <h1>
-            {title}
-          </h1>
-
-          <p>
-            {description}
-          </p>
-
-        </div>
-
-      </section>
-
-
-      <div className="panel">
-
-        <div className="placeholder-content">
-
-          <h3>
-            {title}
-          </h3>
-
-          <p>
-            This section will be connected
-            to the security analysis workflow.
-          </p>
-
-        </div>
-
-      </div>
-
-    </main>
+    <Navigate
+      to={isAuthenticated ? "/dashboard" : "/login"}
+      replace
+    />
   );
 }
 
+function GuestOnlyRoute({ mode }) {
+  const { isAuthenticated, loading } = useAuth();
 
-function App() {
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <AuthPage mode={mode} />;
+}
+
+function AuthenticatedLayout() {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <AuthLoadingScreen />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
-    <BrowserRouter>
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
+}
 
-      <Routes>
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<RootRedirect />} />
 
-        {/* ROOT */}
+      <Route
+        path="/login"
+        element={<GuestOnlyRoute mode="login" />}
+      />
 
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to="/projects"
-              replace
-            />
-          }
-        />
+      <Route
+        path="/register"
+        element={<GuestOnlyRoute mode="register" />}
+      />
 
+      <Route element={<AuthenticatedLayout />}>
+        <Route path="/dashboard" element={<DashboardEntry />} />
 
-        {/* DASHBOARD ENTRY */}
-
-        <Route
-          path="/dashboard"
-          element={
-            <AppLayout>
-              <DashboardEntry />
-            </AppLayout>
-          }
-        />
-
-
-        {/* ACTUAL DASHBOARD */}
-
-        <Route
-          path="/projects/:projectId/scans/:scanId"
-          element={
-            <AppLayout>
-              <ScanView />
-            </AppLayout>
-          }
-        />
-
-
-        {/* PROJECTS */}
-
-        <Route
-          path="/projects"
-          element={
-            <AppLayout>
-              <Projects />
-            </AppLayout>
-          }
-        />
-
-
-        {/* PROJECT DETAILS */}
+        <Route path="/projects" element={<Projects />} />
 
         <Route
           path="/projects/:projectId"
-          element={
-            <AppLayout>
-              <ProjectDetails />
-            </AppLayout>
-          }
+          element={<ProjectDetails />}
         />
-
-
-        {/* PROJECT SCAN HISTORY */}
 
         <Route
           path="/projects/:projectId/scans"
-          element={
-            <AppLayout>
-              <ScanHistory />
-            </AppLayout>
-          }
+          element={<ScanHistory />}
         />
 
-
-        {/* SECURITY */}
+        <Route
+          path="/projects/:projectId/scans/:scanId"
+          element={<ScanView />}
+        />
 
         <Route
           path="/vulnerabilities"
-          element={
-            <AppLayout>
-              <PlaceholderPage
-                title="Vulnerabilities"
-                description="Investigate vulnerabilities detected across your projects."
-              />
-            </AppLayout>
-          }
+          element={<VulnerabilityIntelligence />}
         />
-
 
         <Route
           path="/dependency-graph"
-          element={
-            <AppLayout>
-              <PlaceholderPage
-                title="Dependency Graph"
-                description="Explore dependency relationships and affected paths."
-              />
-            </AppLayout>
-          }
+          element={<DependencyGraph />}
         />
-
 
         <Route
           path="/risk-analysis"
-          element={
-            <AppLayout>
-              <PlaceholderPage
-                title="Risk Analysis"
-                description="Review contextual project-level risk assessments."
-              />
-            </AppLayout>
-          }
+          element={<RiskAnalysis />}
         />
-
-
-        {/* GLOBAL SCAN HISTORY */}
 
         <Route
           path="/scan-history"
-          element={
-            <AppLayout>
-              <ScanHistory />
-            </AppLayout>
-          }
+          element={<ScanHistory />}
         />
 
+        <Route path="/settings" element={<Settings />} />
+      </Route>
 
-        {/* SETTINGS */}
-
-        <Route
-          path="/settings"
-          element={
-            <AppLayout>
-              <PlaceholderPage
-                title="Settings"
-                description="Configure OpenChain Sentinel preferences."
-              />
-            </AppLayout>
-          }
-        />
-
-
-        {/* FALLBACK */}
-
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to="/projects"
-              replace
-            />
-          }
-        />
-
-      </Routes>
-
-    </BrowserRouter>
+      <Route path="*" element={<RootRedirect />} />
+    </Routes>
   );
 }
 
+function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
 
 export default App;

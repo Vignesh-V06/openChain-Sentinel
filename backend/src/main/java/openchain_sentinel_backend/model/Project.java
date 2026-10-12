@@ -1,6 +1,7 @@
 package openchain_sentinel_backend.model;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -10,6 +11,14 @@ public class Project {
 
     @Id
     private String id;
+
+    /*
+     * Owner of this project.
+     *
+     * This stores the User document id.
+     */
+    @Indexed
+    private String userId;
 
     private String name;
 
@@ -32,6 +41,14 @@ public class Project {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public String getName() {
