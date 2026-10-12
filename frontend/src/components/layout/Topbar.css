@@ -1,0 +1,349 @@
+
+.topbar {
+  position: relative;
+  z-index: 30;
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 28px 0 34px;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.07));
+  background: rgba(8, 10, 15, 0.96);
+}
+
+.topbar-quote {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #929baa;
+  font-size: 13px;
+  font-weight: 550;
+  letter-spacing: -0.1px;
+}
+
+.topbar-quote-mark {
+  color: var(--blue, #65a7ff);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 19px;
+  min-width: 0;
+}
+
+.topbar-notification-wrap,
+.topbar-account-wrap {
+  position: relative;
+}
+
+.topbar-icon-button {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: #929baa;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.topbar-icon-button:hover,
+.topbar-icon-button.is-active {
+  border-color: var(--border, rgba(255,255,255,0.07));
+  background: var(--surface-2, #11151d);
+  color: var(--text, #edf0f5);
+}
+
+.topbar-account-trigger {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 5px 0 5px 5px;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text, #edf0f5);
+  text-align: left;
+  cursor: pointer;
+}
+
+.topbar-account-trigger:hover .topbar-avatar {
+  border-color: rgba(101, 167, 255, 0.45);
+}
+
+.topbar-avatar {
+  width: 41px;
+  height: 41px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(101, 167, 255, 0.12);
+  border-radius: 11px;
+  background: linear-gradient(145deg, #26344c, #172033);
+  color: #f3f6fb;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.2px;
+}
+
+.topbar-account-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  max-width: 170px;
+}
+
+.topbar-account-copy strong {
+  overflow: hidden;
+  color: #e8ebf2;
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-account-copy > span {
+  overflow: hidden;
+  color: #697384;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-account-chevron {
+  flex-shrink: 0;
+  color: #788496;
+  transition: transform 150ms ease;
+}
+
+.topbar-account-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.topbar-popover {
+  position: absolute;
+  top: calc(100% + 13px);
+  right: 0;
+  z-index: 100;
+  width: 300px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong, rgba(255,255,255,0.12));
+  border-radius: 13px;
+  background: #10141c;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.4);
+  animation: topbar-popover-in 140ms ease-out;
+}
+
+@keyframes topbar-popover-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.topbar-menu-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 17px;
+}
+
+.topbar-avatar-large {
+  width: 43px;
+  height: 43px;
+}
+
+.topbar-menu-user-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.topbar-menu-user-copy strong {
+  overflow: hidden;
+  color: #edf0f5;
+  font-size: 13px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-menu-user-copy span {
+  overflow: hidden;
+  color: #8490a2;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-menu-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+}
+
+.topbar-menu-item {
+  width: 100%;
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 17px;
+  background: transparent;
+  color: #c6cdd8;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.topbar-menu-item svg {
+  flex-shrink: 0;
+  color: #8793a6;
+}
+
+.topbar-menu-item:hover {
+  background: rgba(255,255,255,0.045);
+  color: #f0f3f8;
+}
+
+.topbar-menu-item:hover svg {
+  color: var(--blue, #65a7ff);
+}
+
+.topbar-menu-security {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 17px;
+  color: #7c899b;
+  font-size: 10px;
+}
+
+.topbar-menu-security svg {
+  color: var(--green, #3ddc97);
+}
+
+.topbar-menu-logout {
+  min-height: 45px;
+  border-top: 1px solid rgba(255,255,255,0.055);
+  color: #ff858e;
+}
+
+.topbar-menu-logout svg {
+  color: #ff737e;
+}
+
+.topbar-menu-logout:hover {
+  background: rgba(255,92,105,0.08);
+  color: #ff9ba3;
+}
+
+.topbar-menu-logout:hover svg {
+  color: #ff9ba3;
+}
+
+.topbar-popover-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 17px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.topbar-popover-heading strong {
+  color: #edf0f5;
+  font-size: 13px;
+}
+
+.topbar-muted-label {
+  color: #758195;
+  font-size: 10px;
+}
+
+.topbar-empty-notifications {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 26px 22px 25px;
+  text-align: center;
+}
+
+.topbar-empty-icon {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 13px;
+  border: 1px solid rgba(101,167,255,0.14);
+  border-radius: 12px;
+  background: rgba(101,167,255,0.07);
+  color: var(--blue, #65a7ff);
+}
+
+.topbar-empty-notifications strong {
+  color: #e5eaf3;
+  font-size: 12px;
+}
+
+.topbar-empty-notifications p {
+  margin: 7px 0 0;
+  color: #8792a3;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    min-height: 64px;
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .topbar-quote {
+    max-width: 46%;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+
+  .topbar-actions {
+    gap: 7px;
+  }
+
+  .topbar-account-copy,
+  .topbar-account-chevron {
+    display: none;
+  }
+
+  .topbar-account-trigger {
+    padding: 0;
+  }
+
+  .topbar-avatar {
+    width: 37px;
+    height: 37px;
+  }
+
+  .topbar-popover {
+    position: fixed;
+    top: 68px;
+    right: 10px;
+    width: min(300px, calc(100vw - 20px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topbar-popover {
+    animation: none;
+  }
+}
