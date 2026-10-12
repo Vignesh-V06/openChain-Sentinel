@@ -1,0 +1,63 @@
+OPENCHAIN SENTINEL — DEPENDENCY GRAPH STAGE
+
+1) FRONTEND PACKAGE
+From frontend/:
+    npm install @xyflow/react
+
+2) BACKEND
+Copy these two Java files into:
+    backend/src/main/java/openchain_sentinel_backend/service/DependencyGraphService.java
+    backend/src/main/java/openchain_sentinel_backend/controller/DependencyGraphController.java
+
+No new Neo4j database configuration is required. The service uses the existing Spring Neo4j Driver and the existing:
+    spring.data.neo4j.database
+configuration.
+
+3) FRONTEND API
+Replace frontend/src/services/api.js with the supplied api.js if your current file uses the same API methods already used by the project.
+The only new API method introduced by this stage is:
+    getDependencyGraph(projectId, scanId)
+
+4) FRONTEND PAGE
+Replace:
+    frontend/src/pages/DependencyGraph.jsx
+with the supplied file.
+
+The page includes Sidebar + Topbar itself, so it is ready to render as a standalone routed page.
+If your App.jsx already wraps every route in a shared AppShell, remove the duplicated Sidebar/Topbar from the page and keep the shared shell instead.
+
+5) FRONTEND CSS
+Copy:
+    frontend/src/styles/DependencyGraph.css
+and keep the import already present in DependencyGraph.jsx.
+
+6) ROUTE
+Your existing route should point to:
+    /dependency-graph -> DependencyGraph
+
+7) API ENDPOINT ADDED
+GET:
+    /api/projects/{projectId}/scans/{scanId}/graph
+
+The endpoint reads only relationships carrying the selected scanId, so historical scan relationships are not mixed into the current graph.
+
+8) TEST
+Start Neo4j first.
+Start Spring Boot backend.
+Start Vite frontend.
+Open:
+    /dependency-graph
+Choose a project and completed scan.
+Expected:
+- dependency nodes appear from the real Neo4j graph
+- direct/transitive counts match the selected scan
+- vulnerable dependencies are highlighted
+- AFFECTED_BY links point to vulnerability nodes
+- search/filter works
+- nodes can be dragged
+- zoom/pan/minimap/fit-to-view work
+- clicking a vulnerability opens its Vulnerability Intelligence page
+
+9) IMPORTANT
+The graph is not hardcoded. It is generated from the Neo4j data created by the scan pipeline.
+The backend deliberately uses Version nodes because the current implemented graph schema uses :Version, even though the original Review-I document called this conceptual node PackageVersion.

@@ -11,6 +11,9 @@ public class Scan {
     @Id
     private String id;
 
+    /*
+     * Ownership is inherited through Project.
+     */
     private String projectId;
 
     private String status;
@@ -25,8 +28,11 @@ public class Scan {
     }
 
     public Scan(String projectId) {
+
         this.projectId = projectId;
+
         this.status = "PENDING";
+
         this.createdAt = LocalDateTime.now();
     }
 
